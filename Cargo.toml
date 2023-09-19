@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 clipboard-win = "4.5.0"
+hex = "0.4.3"

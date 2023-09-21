@@ -1,7 +1,7 @@
 use clipboard_win::{formats, get_clipboard};
 use hex;
 use std::env;
-use std::fs::File;
+use std::fs::{OpenOptions, File};
 use std::io::prelude::*;
 
 struct Settings {
@@ -40,7 +40,7 @@ fn get_settings(args: &Vec<String>) -> Settings {
 fn get_path(args: &Vec<String>) -> Option<String> {
     for arg in args.iter().skip(1) {
         if arg.contains(".") || !arg.contains("-") {
-            return Some(arg.to_string())
+            return Some(arg.to_string());
         }
     }
     None
@@ -51,11 +51,8 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
     let settings = get_settings(&args);
-    let path = get_path(&args).unwrap_or_default();
+    let path = get_path(&args);
 
-    println!("{}", path);
-
-    let mut file = File::create(path).unwrap();
     if settings.hex {
         contents = hex::encode(contents);
     } else if settings.binary {
@@ -69,5 +66,19 @@ fn main() {
     } else if settings.lowercase {
         contents = contents.to_lowercase()
     }
-    file.write_all(contents.as_bytes()).unwrap();
+
+    match path {
+        Some(path) => {
+            let mut file;
+            if settings.append {
+                file = OpenOptions::new().append(true).open(path).unwrap();
+            } else {
+                file = File::create(path).unwrap();
+            }
+            file.write_all(contents.as_bytes()).unwrap();
+        }
+        None => {
+            println!("{}", contents);
+        }
+    }
 }
